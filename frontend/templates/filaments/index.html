@@ -3,76 +3,99 @@
 {% block title %}Filaments{% endblock %}
 
 {% block content %}
-<h1>Filament types</h1>
-<a href="{{ url_for('new_filament_type') }}">New filament type</a>
-<a href="{{ url_for('new_spool') }}">New spool</a>
+<div class="page-header">
+    <h1>Filament types</h1>
+    <div class="btn-group">
+        <a href="{{ url_for('new_filament_type') }}" class="btn btn-primary">New filament type</a>
+        <a href="{{ url_for('new_spool') }}" class="btn btn-secondary">New spool</a>
+    </div>
+</div>
 
 {% for filament_type in filament_types %}
-<section>
-    <h2>{{ filament_type.name }} ({{ filament_type.temp_min }}-{{ filament_type.temp_max }}°C)</h2>
-    <a href="{{ url_for('edit_filament_type', type_id=filament_type.id) }}">Edit</a>
-    <form action="{{ url_for('delete_filament_type', type_id=filament_type.id) }}" method="post" style="display:inline">
-        <button type="submit" onclick="return confirm('Delete this filament type?')">Delete</button>
-    </form>
+<section class="card">
+    <div class="card-header">
+        <h2>{{ filament_type.name }} ({{ filament_type.temp_min }}-{{ filament_type.temp_max }}°C)</h2>
+        <div class="btn-group">
+            <a href="{{ url_for('edit_filament_type', type_id=filament_type.id) }}" class="btn btn-secondary btn-sm">Edit</a>
+            <form action="{{ url_for('delete_filament_type', type_id=filament_type.id) }}" method="post">
+                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Delete this filament type?')">Delete</button>
+            </form>
+        </div>
+    </div>
 
-    <table>
-        <thead>
-            <tr>
-                <th>Number</th>
-                <th>Brand</th>
-                <th>Color</th>
-                <th>Total weight (g)</th>
-                <th>Remaining weight (g)</th>
-                <th>Cost per kg</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for spool in filament_type.spools %}
-            <tr>
-                <td>{{ spool.number }}</td>
-                <td>{{ spool.brand }}</td>
-                <td>{{ spool.color }}</td>
-                <td>{{ spool.total_weight_g }}</td>
-                <td>{{ spool.remaining_weight_g }}</td>
-                <td>{{ spool.cost_per_kg }}</td>
-                <td>
-                    <a href="{{ url_for('edit_spool', spool_id=spool.id) }}">Edit</a>
-                    <form action="{{ url_for('delete_spool', spool_id=spool.id) }}" method="post" style="display:inline">
-                        <button type="submit" onclick="return confirm('Delete this spool?')">Delete</button>
-                    </form>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="table-wrapper">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Number</th>
+                    <th>Brand</th>
+                    <th>Color</th>
+                    <th>Total weight (g)</th>
+                    <th>Remaining weight (g)</th>
+                    <th>Cost per kg</th>
+                    <th class="actions"></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for spool in filament_type.spools %}
+                <tr>
+                    <td>{{ spool.number }}</td>
+                    <td>{{ spool.brand }}</td>
+                    <td>{{ spool.color }}</td>
+                    <td>{{ spool.total_weight_g }}</td>
+                    <td>{{ spool.remaining_weight_g }}</td>
+                    <td>{{ spool.cost_per_kg }}</td>
+                    <td class="actions">
+                        <div class="btn-group">
+                            <a href="{{ url_for('edit_spool', spool_id=spool.id) }}" class="btn btn-secondary btn-sm">Edit</a>
+                            <form action="{{ url_for('delete_spool', spool_id=spool.id) }}" method="post">
+                                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Delete this spool?')">Delete</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if not filament_type.spools %}
+    <p class="empty-state">No spools registered for this filament type.</p>
+    {% endif %}
 </section>
 {% endfor %}
 
-<h2>Suggest a spool</h2>
-<form method="get">
-    <label for="weight_g">Weight needed (g)</label>
-    <input type="number" id="weight_g" name="weight_g" step="0.01" min="0" value="{{ weight_g or '' }}" required>
+<section class="card">
+    <h2>Suggest a spool</h2>
+    <form method="get" class="form">
+        <div class="form-group">
+            <label for="weight_g">Weight needed (g)</label>
+            <input type="number" id="weight_g" name="weight_g" step="0.01" min="0" value="{{ weight_g or '' }}" required>
+        </div>
 
-    <label for="type_id">Filament type</label>
-    <select id="type_id" name="type_id" required>
-        <option value="">Select a type</option>
-        {% for filament_type in filament_types %}
-        <option value="{{ filament_type.id }}" {% if type_id|string == filament_type.id|string %}selected{% endif %}>{{ filament_type.name }}</option>
-        {% endfor %}
-    </select>
+        <div class="form-group">
+            <label for="type_id">Filament type</label>
+            <select id="type_id" name="type_id" required>
+                <option value="">Select a type</option>
+                {% for filament_type in filament_types %}
+                <option value="{{ filament_type.id }}" {% if type_id|string == filament_type.id|string %}selected{% endif %}>{{ filament_type.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
 
-    <button type="submit">Suggest</button>
-</form>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Suggest</button>
+        </div>
+    </form>
 
-{% if weight_g and type_id %}
-    {% if suggestion %}
-    <p>
-        Suggested spool: #{{ suggestion.number }} - {{ suggestion.brand }} {{ suggestion.color }}
-        ({{ suggestion.remaining_weight_g }}g remaining)
-    </p>
-    {% else %}
-    <p>No spool with enough remaining weight was found.</p>
+    {% if weight_g and type_id %}
+        {% if suggestion %}
+        <p class="suggestion-result">
+            Suggested spool: #{{ suggestion.number }} - {{ suggestion.brand }} {{ suggestion.color }}
+            ({{ suggestion.remaining_weight_g }}g remaining)
+        </p>
+        {% else %}
+        <p class="empty-state">No spool with enough remaining weight was found.</p>
+        {% endif %}
     {% endif %}
-{% endif %}
+</section>
 {% endblock %}

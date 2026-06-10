@@ -2,14 +2,23 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}Print Manager 3D{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <nav>
-        <a href="{{ url_for('list_printers') }}">Printers</a>
-        <a href="{{ url_for('list_filaments') }}">Filaments</a>
-    </nav>
-    <main>
+    <header class="navbar">
+        <a class="navbar-brand" href="/">Print Manager 3D</a>
+        <nav class="navbar-links">
+            <a href="/" class="{{ 'active' if request.path == '/' else '' }}">Dashboard</a>
+            <a href="{{ url_for('list_printers') }}" class="{{ 'active' if request.path.startswith('/printers') else '' }}">Printers</a>
+            <a href="{{ url_for('list_filaments') }}" class="{{ 'active' if request.path.startswith('/filaments') else '' }}">Filaments &amp; Spools</a>
+            <a href="/prints" class="{{ 'active' if request.path.startswith('/prints') else '' }}">Prints</a>
+            <a href="/quotes" class="{{ 'active' if request.path.startswith('/quotes') else '' }}">Quotes</a>
+            <a href="/clients" class="{{ 'active' if request.path.startswith('/clients') else '' }}">Clients</a>
+        </nav>
+    </header>
+    <main class="page-content">
         {% block content %}{% endblock %}
     </main>
 </body>

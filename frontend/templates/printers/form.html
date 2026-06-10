@@ -3,23 +3,34 @@
 {% block title %}{{ "Edit printer" if printer else "New printer" }}{% endblock %}
 
 {% block content %}
-<h1>{{ "Edit printer" if printer else "New printer" }}</h1>
+<div class="page-header">
+    <h1>{{ "Edit printer" if printer else "New printer" }}</h1>
+</div>
 
-<form method="post">
-    <label for="name">Name</label>
-    <input type="text" id="name" name="name" value="{{ printer.name if printer else '' }}" required>
+<form method="post" class="form">
+    <div class="form-group">
+        <label for="name">Name</label>
+        <input type="text" id="name" name="name" value="{{ printer.name if printer else '' }}" required>
+    </div>
 
-    <label for="brand">Brand</label>
-    <input type="text" id="brand" name="brand" value="{{ printer.brand if printer else '' }}" required>
+    <div class="form-group">
+        <label for="brand">Brand</label>
+        <input type="text" id="brand" name="brand" value="{{ printer.brand if printer else '' }}" required>
+    </div>
 
-    <label for="hourly_cost">Hourly cost</label>
-    <input type="number" id="hourly_cost" name="hourly_cost" step="0.01" min="0" value="{{ printer.hourly_cost if printer else '' }}" required>
+    <div class="form-group">
+        <label for="hourly_cost">Hourly cost</label>
+        <input type="number" id="hourly_cost" name="hourly_cost" step="0.01" min="0" value="{{ printer.hourly_cost if printer else '' }}" required>
+    </div>
 
-    <label for="active">
+    <div class="form-group form-check">
         <input type="checkbox" id="active" name="active" {% if not printer or printer.active %}checked{% endif %}>
-        Active
-    </label>
+        <label for="active">Active</label>
+    </div>
 
-    <button type="submit">Save</button>
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Save</button>
+        <a href="{{ url_for('list_printers') }}" class="btn btn-secondary">Cancel</a>
+    </div>
 </form>
 {% endblock %}
