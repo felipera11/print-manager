@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}{{ "Edit filament type" if filament_type else "New filament type" }}{% endblock %}
+
+{% block content %}
+<h1>{{ "Edit filament type" if filament_type else "New filament type" }}</h1>
+
+<form method="post">
+    <label for="name">Name</label>
+    <input type="text" id="name" name="name" value="{{ filament_type.name if filament_type else '' }}" required>
+
+    <label for="temp_min">Min temperature (°C)</label>
+    <input type="number" id="temp_min" name="temp_min" value="{{ filament_type.temp_min if filament_type else '' }}" required>
+
+    <label for="temp_max">Max temperature (°C)</label>
+    <input type="number" id="temp_max" name="temp_max" value="{{ filament_type.temp_max if filament_type else '' }}" required>
+
+    <button type="submit">Save</button>
+</form>
+{% endblock %}

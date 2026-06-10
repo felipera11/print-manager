@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}{{ "Edit printer" if printer else "New printer" }}{% endblock %}
+
+{% block content %}
+<h1>{{ "Edit printer" if printer else "New printer" }}</h1>
+
+<form method="post">
+    <label for="name">Name</label>
+    <input type="text" id="name" name="name" value="{{ printer.name if printer else '' }}" required>
+
+    <label for="brand">Brand</label>
+    <input type="text" id="brand" name="brand" value="{{ printer.brand if printer else '' }}" required>
+
+    <label for="hourly_cost">Hourly cost</label>
+    <input type="number" id="hourly_cost" name="hourly_cost" step="0.01" min="0" value="{{ printer.hourly_cost if printer else '' }}" required>
+
+    <label for="active">
+        <input type="checkbox" id="active" name="active" {% if not printer or printer.active %}checked{% endif %}>
+        Active
+    </label>
+
+    <button type="submit">Save</button>
+</form>
+{% endblock %}

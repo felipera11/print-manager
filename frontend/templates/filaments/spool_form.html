@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}{{ "Edit spool" if spool else "New spool" }}{% endblock %}
+
+{% block content %}
+<h1>{{ "Edit spool" if spool else "New spool" }}</h1>
+
+<form method="post">
+    <label for="number">Number</label>
+    <input type="number" id="number" name="number" value="{{ spool.number if spool else '' }}" required>
+
+    <label for="type_id">Filament type</label>
+    <select id="type_id" name="type_id" required>
+        {% for filament_type in filament_types %}
+        <option value="{{ filament_type.id }}" {% if spool and spool.type_id == filament_type.id %}selected{% endif %}>{{ filament_type.name }}</option>
+        {% endfor %}
+    </select>
+
+    <label for="brand">Brand</label>
+    <input type="text" id="brand" name="brand" value="{{ spool.brand if spool else '' }}" required>
+
+    <label for="color">Color</label>
+    <input type="text" id="color" name="color" value="{{ spool.color if spool else '' }}" required>
+
+    <label for="total_weight_g">Total weight (g)</label>
+    <input type="number" id="total_weight_g" name="total_weight_g" step="0.01" min="0" value="{{ spool.total_weight_g if spool else '' }}" required>
+
+    <label for="remaining_weight_g">Remaining weight (g)</label>
+    <input type="number" id="remaining_weight_g" name="remaining_weight_g" step="0.01" min="0" value="{{ spool.remaining_weight_g if spool else '' }}" required>
+
+    <label for="cost_per_kg">Cost per kg</label>
+    <input type="number" id="cost_per_kg" name="cost_per_kg" step="0.01" min="0" value="{{ spool.cost_per_kg if spool else '' }}" required>
+
+    <button type="submit">Save</button>
+</form>
+{% endblock %}

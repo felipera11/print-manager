@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Print Manager 3D{% endblock %}</title>
+</head>
+<body>
+    <nav>
+        <a href="{{ url_for('list_printers') }}">Printers</a>
+        <a href="{{ url_for('list_filaments') }}">Filaments</a>
+    </nav>
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>
