@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: print_manager
+          POSTGRES_PASSWORD: print_manager
+          POSTGRES_DB: print_manager
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U print_manager"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      POSTGRES_USER: print_manager
+      POSTGRES_PASSWORD: print_manager
+      POSTGRES_DB: print_manager
+      DATABASE_URL: postgresql://print_manager:print_manager@localhost:5432/print_manager
+      PYTHONPATH: ${{ github.workspace }}/backend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install backend dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+          pip install pytest httpx
+
+      - name: Run tests
+        run: pytest tests/
