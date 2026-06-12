@@ -17,6 +17,20 @@
     --color-text: #1e293b;
     --color-text-muted: #64748b;
 
+    --color-warning: #d97706;
+    --color-info: #0891b2;
+
+    --color-badge-gray-bg: #f1f5f9;
+    --color-badge-gray-text: #475569;
+    --color-badge-blue-bg: #dbeafe;
+    --color-badge-blue-text: #1d4ed8;
+    --color-badge-green-bg: #dcfce7;
+    --color-badge-green-text: #15803d;
+    --color-badge-red-bg: #fee2e2;
+    --color-badge-red-text: #b91c1c;
+    --color-badge-orange-bg: #ffedd5;
+    --color-badge-orange-text: #c2410c;
+
     --radius: 6px;
 
     --space-xs: 4px;
@@ -169,6 +183,7 @@ a {
 .stat-card {
     margin-bottom: 0;
     text-align: center;
+    border-top: 4px solid var(--color-border);
 }
 
 .stat-card h2 {
@@ -182,6 +197,14 @@ a {
     font-size: 1.75rem;
     font-weight: 700;
     margin: 0;
+}
+
+.stat-card-spend {
+    border-top-color: var(--color-primary);
+}
+
+.stat-card-quotes {
+    border-top-color: var(--color-info);
 }
 
 /* ==========================================================================
@@ -307,6 +330,75 @@ a {
     text-align: right;
 }
 
+.table tbody tr.row-warning {
+    background-color: #fff7ed;
+}
+
+.table tbody tr.row-warning:hover {
+    background-color: #ffedd5;
+}
+
+.table tbody tr.row-critical {
+    background-color: #fef2f2;
+}
+
+.table tbody tr.row-critical:hover {
+    background-color: #fee2e2;
+}
+
+/* ==========================================================================
+   Badges
+   ========================================================================== */
+
+.badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: capitalize;
+    white-space: nowrap;
+}
+
+.badge-queued,
+.badge-pending {
+    background-color: var(--color-badge-gray-bg);
+    color: var(--color-badge-gray-text);
+}
+
+.badge-printing,
+.badge-sent {
+    background-color: var(--color-badge-blue-bg);
+    color: var(--color-badge-blue-text);
+}
+
+.badge-completed,
+.badge-approved {
+    background-color: var(--color-badge-green-bg);
+    color: var(--color-badge-green-text);
+}
+
+.badge-failed,
+.badge-declined {
+    background-color: var(--color-badge-red-bg);
+    color: var(--color-badge-red-text);
+}
+
+.queue-position {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 26px;
+    height: 26px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background-color: var(--color-bg);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-muted);
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
 /* ==========================================================================
    Forms
    ========================================================================== */
@@ -370,6 +462,19 @@ a {
 .form-group label {
     font-weight: 600;
     font-size: 0.9rem;
+}
+
+.form-group label:has(+ input[required]):after,
+.form-group label:has(+ select[required]):after,
+.form-group label:has(+ textarea[required]):after {
+    content: " *";
+    color: var(--color-danger);
+}
+
+.field-optional {
+    color: var(--color-text-muted);
+    font-weight: 400;
+    font-size: 0.85rem;
 }
 
 input[type="text"],
@@ -511,5 +616,9 @@ textarea.is-invalid:focus {
     .table th,
     .table td {
         white-space: normal;
+    }
+
+    .dashboard-stats {
+        grid-template-columns: 1fr;
     }
 }

@@ -19,7 +19,7 @@
     <p><strong>Generator:</strong> {{ quote.issuer.name if quote.issuer else "-" }}</p>
     <p><strong>Receiver:</strong> {{ quote.client.name if quote.client else "-" }}</p>
     <p><strong>Date:</strong> {{ quote.date }}</p>
-    <p><strong>Status:</strong> {{ quote.status }}</p>
+    <p><strong>Status:</strong> <span class="badge badge-{{ quote.status }}">{{ quote.status }}</span></p>
     <p><strong>Discount:</strong> {{ quote.discount }}%</p>
     <p><strong>Total:</strong> ${{ "%.2f"|format(quote.total) }}</p>
 </section>

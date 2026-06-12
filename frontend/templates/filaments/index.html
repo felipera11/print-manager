@@ -61,6 +61,10 @@
     <p class="empty-state">No spools registered for this filament type.</p>
     {% endif %}
 </section>
+{% else %}
+<section class="card">
+    <p class="empty-state">No filament types registered yet. Add one to start tracking spools.</p>
+</section>
 {% endfor %}
 
 <section class="card">

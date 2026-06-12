@@ -7,6 +7,10 @@
     <h1>{{ "Edit client" if client else "New client" }}</h1>
 </div>
 
+{% if error %}
+<p class="alert-error">{{ error }}</p>
+{% endif %}
+
 <form method="post" class="form">
     <div class="form-group">
         <label for="name">Name</label>
@@ -24,7 +28,7 @@
     </div>
 
     <div class="form-group">
-        <label for="address">Address</label>
+        <label for="address">Address <span class="field-optional">(optional)</span></label>
         <input type="text" id="address" name="address" value="{{ client.address or '' if client else '' }}">
     </div>
 
@@ -34,7 +38,7 @@
     </div>
 
     <div class="form-group">
-        <label for="phone">Phone</label>
+        <label for="phone">Phone <span class="field-optional">(optional)</span></label>
         <input type="text" id="phone" name="phone" value="{{ client.phone or '' if client else '' }}">
     </div>
 

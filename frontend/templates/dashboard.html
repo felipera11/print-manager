@@ -8,11 +8,11 @@
 </div>
 
 <div class="dashboard-stats">
-    <div class="card stat-card">
+    <div class="card stat-card stat-card-spend">
         <h2>Monthly spend</h2>
         <p class="stat-value">R$ {{ "%.2f"|format(dashboard.monthly_spend) }}</p>
     </div>
-    <div class="card stat-card">
+    <div class="card stat-card stat-card-quotes">
         <h2>Open quotes</h2>
         <p class="stat-value">{{ dashboard.open_quotes }}</p>
     </div>
@@ -32,16 +32,19 @@
                     <th>Color</th>
                     <th>Remaining (g)</th>
                     <th>Total (g)</th>
+                    <th>Remaining %</th>
                 </tr>
             </thead>
             <tbody>
                 {% for spool in dashboard.critical_spools %}
-                <tr>
+                {% set remaining_ratio = (spool.remaining_weight_g / spool.total_weight_g) if spool.total_weight_g else 0 %}
+                <tr class="{{ 'row-critical' if remaining_ratio < 0.1 else 'row-warning' }}">
                     <td>#{{ spool.number }}</td>
                     <td>{{ spool.type }}</td>
                     <td>{{ spool.color }}</td>
                     <td>{{ spool.remaining_weight_g }}</td>
                     <td>{{ spool.total_weight_g }}</td>
+                    <td>{{ (remaining_ratio * 100) | round(1) }}%</td>
                 </tr>
                 {% endfor %}
             </tbody>

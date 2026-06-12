@@ -78,7 +78,7 @@ def get_monthly_spend(db: Session) -> float:
 
 
 def get_open_quotes_count(db: Session) -> int:
-    return db.query(Quote).filter(Quote.status == "open").count()
+    return db.query(Quote).filter(Quote.status.in_(["pending", "sent"])).count()
 
 
 @router.get("/", response_model=DashboardResponse)

@@ -24,7 +24,7 @@
             <tr>
                 <td>{{ quote.client.name if quote.client else "-" }}</td>
                 <td>{{ quote.date }}</td>
-                <td>{{ quote.status }}</td>
+                <td><span class="badge badge-{{ quote.status }}">{{ quote.status }}</span></td>
                 <td>${{ "%.2f"|format(quote.total) }}</td>
                 <td class="actions">
                     <div class="btn-group">

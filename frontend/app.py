@@ -28,7 +28,10 @@ def new_printer():
 
 @app.route("/printers/new", methods=["POST"])
 def create_printer():
-    requests.post(f"{BACKEND_URL}/api/v1/printers/", json=printer_form_payload())
+    payload = printer_form_payload()
+    response = requests.post(f"{BACKEND_URL}/api/v1/printers/", json=payload)
+    if response.status_code >= 400:
+        return render_template("printers/form.html", printer=payload, error=extract_error_message(response))
     return redirect(url_for("list_printers"))
 
 
@@ -40,7 +43,10 @@ def edit_printer(printer_id):
 
 @app.route("/printers/<int:printer_id>/edit", methods=["POST"])
 def update_printer(printer_id):
-    requests.put(f"{BACKEND_URL}/api/v1/printers/{printer_id}", json=printer_form_payload())
+    payload = printer_form_payload()
+    response = requests.put(f"{BACKEND_URL}/api/v1/printers/{printer_id}", json=payload)
+    if response.status_code >= 400:
+        return render_template("printers/form.html", printer=payload, error=extract_error_message(response))
     return redirect(url_for("list_printers"))
 
 
@@ -100,7 +106,10 @@ def new_filament_type():
 
 @app.route("/filaments/types/new", methods=["POST"])
 def create_filament_type():
-    requests.post(f"{BACKEND_URL}/api/v1/filament-types/", json=filament_type_form_payload())
+    payload = filament_type_form_payload()
+    response = requests.post(f"{BACKEND_URL}/api/v1/filament-types/", json=payload)
+    if response.status_code >= 400:
+        return render_template("filaments/type_form.html", filament_type=payload, error=extract_error_message(response))
     return redirect(url_for("list_filaments"))
 
 
@@ -112,7 +121,10 @@ def edit_filament_type(type_id):
 
 @app.route("/filaments/types/<int:type_id>/edit", methods=["POST"])
 def update_filament_type(type_id):
-    requests.put(f"{BACKEND_URL}/api/v1/filament-types/{type_id}", json=filament_type_form_payload())
+    payload = filament_type_form_payload()
+    response = requests.put(f"{BACKEND_URL}/api/v1/filament-types/{type_id}", json=payload)
+    if response.status_code >= 400:
+        return render_template("filaments/type_form.html", filament_type=payload, error=extract_error_message(response))
     return redirect(url_for("list_filaments"))
 
 
@@ -129,7 +141,10 @@ def new_spool_model():
 
 @app.route("/filaments/spool-models/new", methods=["POST"])
 def create_spool_model():
-    requests.post(f"{BACKEND_URL}/api/v1/spool-models/", json=spool_model_form_payload())
+    payload = spool_model_form_payload()
+    response = requests.post(f"{BACKEND_URL}/api/v1/spool-models/", json=payload)
+    if response.status_code >= 400:
+        return render_template("filaments/spool_model_form.html", spool_model=payload, error=extract_error_message(response))
     return redirect(url_for("list_filaments"))
 
 
@@ -141,7 +156,10 @@ def edit_spool_model(spool_model_id):
 
 @app.route("/filaments/spool-models/<int:spool_model_id>/edit", methods=["POST"])
 def update_spool_model(spool_model_id):
-    requests.put(f"{BACKEND_URL}/api/v1/spool-models/{spool_model_id}", json=spool_model_form_payload())
+    payload = spool_model_form_payload()
+    response = requests.put(f"{BACKEND_URL}/api/v1/spool-models/{spool_model_id}", json=payload)
+    if response.status_code >= 400:
+        return render_template("filaments/spool_model_form.html", spool_model=payload, error=extract_error_message(response))
     return redirect(url_for("list_filaments"))
 
 
@@ -162,7 +180,10 @@ def new_spool():
 
 @app.route("/filaments/spools/new", methods=["POST"])
 def create_spool():
-    requests.post(f"{BACKEND_URL}/api/v1/spools/", json=spool_form_payload())
+    payload = spool_form_payload()
+    response = requests.post(f"{BACKEND_URL}/api/v1/spools/", json=payload)
+    if response.status_code >= 400:
+        return render_spool_form(spool=None, error=extract_error_message(response))
     return redirect(url_for("list_filaments"))
 
 
@@ -178,8 +199,25 @@ def edit_spool(spool_id):
 
 @app.route("/filaments/spools/<int:spool_id>/edit", methods=["POST"])
 def update_spool(spool_id):
-    requests.put(f"{BACKEND_URL}/api/v1/spools/{spool_id}", json=spool_form_payload())
+    payload = spool_form_payload()
+    response = requests.put(f"{BACKEND_URL}/api/v1/spools/{spool_id}", json=payload)
+    if response.status_code >= 400:
+        existing = requests.get(f"{BACKEND_URL}/api/v1/spools/{spool_id}").json()
+        existing.update(payload)
+        return render_spool_form(spool=existing, error=extract_error_message(response))
     return redirect(url_for("list_filaments"))
+
+
+def render_spool_form(spool, error):
+    filament_types = requests.get(f"{BACKEND_URL}/api/v1/filament-types/").json()
+    spool_models = requests.get(f"{BACKEND_URL}/api/v1/spool-models/").json()
+    return render_template(
+        "filaments/spool_form.html",
+        spool=spool,
+        filament_types=filament_types,
+        spool_models=spool_models,
+        error=error,
+    )
 
 
 @app.route("/filaments/spools/<int:spool_id>/delete", methods=["POST"])
@@ -226,7 +264,10 @@ def new_client():
 
 @app.route("/clients/new", methods=["POST"])
 def create_client():
-    requests.post(f"{BACKEND_URL}/api/v1/clients/", json=client_form_payload())
+    payload = client_form_payload()
+    response = requests.post(f"{BACKEND_URL}/api/v1/clients/", json=payload)
+    if response.status_code >= 400:
+        return render_template("clients/form.html", client=payload, error=extract_error_message(response))
     return redirect(url_for("list_clients"))
 
 
@@ -238,7 +279,10 @@ def edit_client(client_id):
 
 @app.route("/clients/<int:client_id>/edit", methods=["POST"])
 def update_client(client_id):
-    requests.put(f"{BACKEND_URL}/api/v1/clients/{client_id}", json=client_form_payload())
+    payload = client_form_payload()
+    response = requests.put(f"{BACKEND_URL}/api/v1/clients/{client_id}", json=payload)
+    if response.status_code >= 400:
+        return render_template("clients/form.html", client=payload, error=extract_error_message(response))
     return redirect(url_for("list_clients"))
 
 

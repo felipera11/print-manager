@@ -64,7 +64,7 @@
                 <td>{{ print_item.cost }}</td>
                 <td>{{ print_item.price }}</td>
                 <td>{{ print_item.date }}</td>
-                <td>{{ print_item.status }}</td>
+                <td><span class="badge badge-{{ print_item.status }}">{{ print_item.status }}</span></td>
                 <td class="actions">
                     <div class="btn-group">
                         <a href="{{ url_for('edit_print', print_id=print_item.id) }}" class="btn btn-secondary btn-sm">Edit</a>
