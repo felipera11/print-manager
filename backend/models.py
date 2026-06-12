@@ -84,6 +84,7 @@ class Quote(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     client_id = Column(Integer, ForeignKey("clients.id"), nullable=False)
+    issuer_client_id = Column(Integer, ForeignKey("clients.id"), nullable=False)
     discount = Column(Numeric(5, 2), nullable=False, default=0)
     total = Column(Numeric(10, 2), nullable=False)
     date = Column(Date, nullable=False)

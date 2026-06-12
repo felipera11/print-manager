@@ -2,7 +2,7 @@ import os
 from datetime import date
 
 import requests
-from flask import Flask, redirect, render_template, request, url_for
+from flask import Flask, Response, redirect, render_template, request, url_for
 
 app = Flask(__name__)
 
@@ -406,6 +406,129 @@ def reorder_queue():
     print_ids = [int(print_id) for print_id in request.form.getlist("print_id")]
     requests.patch(f"{BACKEND_URL}/api/v1/prints/reorder", json={"print_ids": print_ids})
     return redirect(url_for("print_queue"))
+
+
+@app.route("/quotes")
+def list_quotes():
+    quotes = requests.get(f"{BACKEND_URL}/api/v1/quotes/").json()
+    clients = requests.get(f"{BACKEND_URL}/api/v1/clients/").json()
+    clients_by_id = {c["id"]: c for c in clients}
+    for quote in quotes:
+        quote["client"] = clients_by_id.get(quote["client_id"])
+    return render_template("quotes/index.html", quotes=quotes)
+
+
+@app.route("/quotes/new")
+def new_quote():
+    return render_quote_form(quote=None, is_edit=False)
+
+
+@app.route("/quotes/new", methods=["POST"])
+def create_quote():
+    payload = quote_form_payload()
+    response = requests.post(f"{BACKEND_URL}/api/v1/quotes/", json=payload)
+    if response.status_code >= 400:
+        return render_quote_form(quote=None, is_edit=False, error=extract_error_message(response))
+    return redirect(url_for("list_quotes"))
+
+
+@app.route("/quotes/<int:quote_id>")
+def quote_detail(quote_id):
+    quote = requests.get(f"{BACKEND_URL}/api/v1/quotes/{quote_id}").json()
+    clients = requests.get(f"{BACKEND_URL}/api/v1/clients/").json()
+    printers = requests.get(f"{BACKEND_URL}/api/v1/printers/").json()
+    filament_types = requests.get(f"{BACKEND_URL}/api/v1/filament-types/").json()
+
+    clients_by_id = {c["id"]: c for c in clients}
+    printers_by_id = {p["id"]: p for p in printers}
+    filament_types_by_id = {f["id"]: f for f in filament_types}
+
+    quote["client"] = clients_by_id.get(quote["client_id"])
+    quote["issuer"] = clients_by_id.get(quote["issuer_client_id"])
+    for item in quote["items"]:
+        item["printer"] = printers_by_id.get(item["printer_id"])
+        item["filament_type"] = filament_types_by_id.get(item["filament_type_id"])
+
+    return render_template("quotes/detail.html", quote=quote)
+
+
+@app.route("/quotes/<int:quote_id>/pdf")
+def quote_pdf(quote_id):
+    response = requests.get(f"{BACKEND_URL}/api/v1/quotes/{quote_id}/pdf")
+    return Response(
+        response.content,
+        mimetype="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename=quote_{quote_id}.pdf"},
+    )
+
+
+@app.route("/quotes/<int:quote_id>/edit")
+def edit_quote(quote_id):
+    quote = requests.get(f"{BACKEND_URL}/api/v1/quotes/{quote_id}").json()
+    return render_quote_form(quote=quote, is_edit=True)
+
+
+@app.route("/quotes/<int:quote_id>/edit", methods=["POST"])
+def update_quote(quote_id):
+    payload = quote_form_payload()
+    response = requests.put(f"{BACKEND_URL}/api/v1/quotes/{quote_id}", json=payload)
+    if response.status_code >= 400:
+        payload["id"] = quote_id
+        return render_quote_form(quote=payload, is_edit=True, error=extract_error_message(response))
+    return redirect(url_for("list_quotes"))
+
+
+@app.route("/quotes/<int:quote_id>/delete", methods=["POST"])
+def delete_quote(quote_id):
+    requests.delete(f"{BACKEND_URL}/api/v1/quotes/{quote_id}")
+    return redirect(url_for("list_quotes"))
+
+
+def render_quote_form(quote, is_edit, error=None):
+    clients = requests.get(f"{BACKEND_URL}/api/v1/clients/").json()
+    printers = requests.get(f"{BACKEND_URL}/api/v1/printers/").json()
+    filament_types = requests.get(f"{BACKEND_URL}/api/v1/filament-types/").json()
+    return render_template(
+        "quotes/form.html",
+        quote=quote,
+        is_edit=is_edit,
+        clients=clients,
+        printers=printers,
+        filament_types=filament_types,
+        error=error,
+    )
+
+
+def quote_form_payload():
+    part_names = request.form.getlist("part_name")
+    quantities = request.form.getlist("quantity")
+    weights = request.form.getlist("weight_g")
+    times = request.form.getlist("time_h")
+    margins = request.form.getlist("margin")
+    printer_ids = request.form.getlist("printer_id")
+    filament_type_ids = request.form.getlist("filament_type_id")
+
+    items = []
+    for index in range(len(part_names)):
+        items.append({
+            "part_name": part_names[index],
+            "quantity": int(quantities[index]),
+            "weight_g": float(weights[index]),
+            "time_h": float(times[index]),
+            "margin": float(margins[index]),
+            "printer_id": int(printer_ids[index]),
+            "filament_type_id": int(filament_type_ids[index]),
+        })
+
+    payload = {
+        "client_id": int(request.form["client_id"]),
+        "issuer_client_id": int(request.form["issuer_client_id"]),
+        "discount": float(request.form.get("discount") or 0),
+        "items": items,
+    }
+    if "status" in request.form:
+        payload["status"] = request.form["status"]
+    return payload
 
 
 @app.route("/calculator")

@@ -240,6 +240,11 @@ a {
     font-size: 0.85rem;
 }
 
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 .btn-group {
     display: flex;
     flex-wrap: wrap;
@@ -308,6 +313,51 @@ a {
 
 .form {
     max-width: 480px;
+}
+
+.quote-form {
+    max-width: 900px;
+}
+
+.quote-item {
+    margin-bottom: var(--space-md);
+}
+
+.quote-item-fields {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+}
+
+.quote-item-fields .form-group {
+    flex: 1 1 130px;
+    margin-bottom: 0;
+}
+
+.quote-item-part {
+    flex: 2 1 200px;
+}
+
+.quote-item-qty {
+    flex: 1 1 90px;
+}
+
+.quote-item-select {
+    flex: 1 1 220px;
+}
+
+.quote-item-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-md);
+    margin-top: var(--space-md);
+    padding-top: var(--space-sm);
+    border-top: 1px solid var(--color-border);
+}
+
+.quote-item-footer .suggestion-result {
+    margin: 0;
 }
 
 .form-group {
@@ -404,6 +454,16 @@ textarea.is-invalid:focus {
 .suggestion-result {
     color: var(--color-success);
     font-weight: 500;
+}
+
+.item-total,
+#grand-total {
+    transition: color 0.2s ease, font-weight 0.2s ease;
+}
+
+.total-updated {
+    color: var(--color-primary);
+    font-weight: 700;
 }
 
 .alert-error {

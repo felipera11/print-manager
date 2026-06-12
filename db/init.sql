@@ -64,6 +64,7 @@ CREATE TABLE print_spools (
 CREATE TABLE quotes (
     id SERIAL PRIMARY KEY,
     client_id INTEGER NOT NULL REFERENCES clients(id),
+    issuer_client_id INTEGER NOT NULL REFERENCES clients(id),
     discount NUMERIC(5, 2) NOT NULL DEFAULT 0,
     total NUMERIC(10, 2) NOT NULL,
     date DATE NOT NULL,

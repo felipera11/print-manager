@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+
+{% block title %}{% if is_edit %}Edit quote #{{ quote.id }}{% else %}New quote{% endif %}{% endblock %}
+
+{% macro item_fields(item=None) %}
+<fieldset class="card quote-item">
+    <div class="quote-item-fields">
+        <div class="form-group quote-item-part">
+            <label>Part name</label>
+            <input type="text" name="part_name" value="{{ item.part_name if item else '' }}" required>
+        </div>
+        <div class="form-group quote-item-qty">
+            <label>Quantity</label>
+            <input type="number" name="quantity" step="1" min="1" value="{{ item.quantity if item else 1 }}" required>
+        </div>
+        <div class="form-group quote-item-qty">
+            <label>Weight (g)</label>
+            <input type="number" name="weight_g" step="0.01" min="0" value="{{ item.weight_g if item else '' }}" required>
+        </div>
+        <div class="form-group quote-item-qty">
+            <label>Print time (h)</label>
+            <input type="number" name="time_h" step="0.01" min="0" value="{{ item.time_h if item else '' }}" required>
+        </div>
+        <div class="form-group quote-item-qty">
+            <label>Margin (%)</label>
+            <input type="number" name="margin" step="0.01" min="0" value="{{ item.margin if item else '' }}" required>
+        </div>
+        <div class="form-group quote-item-select">
+            <label>Printer</label>
+            <select name="printer_id" required>
+                {% for printer in printers %}
+                <option value="{{ printer.id }}" {% if item and item.printer_id == printer.id %}selected{% endif %}>{{ printer.name }} - {{ printer.brand }} (${{ printer.hourly_cost }}/h)</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group quote-item-select">
+            <label>Filament type</label>
+            <select name="filament_type_id" required>
+                {% for filament_type in filament_types %}
+                <option value="{{ filament_type.id }}" {% if item and item.filament_type_id == filament_type.id %}selected{% endif %}>{{ filament_type.type }} - {{ filament_type.brand }} (${{ filament_type.cost_per_kg }}/kg)</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+    <div class="quote-item-footer">
+        <p class="suggestion-result">Item total: $<span class="item-total">0.00</span></p>
+        <button type="button" class="btn btn-danger btn-sm remove-item">Remove item</button>
+    </div>
+</fieldset>
+{% endmacro %}
+
+{% block content %}
+<div class="page-header">
+    <h1>{% if is_edit %}Edit quote #{{ quote.id }}{% else %}New quote{% endif %}</h1>
+</div>
+
+{% if error %}
+<p class="alert-error">{{ error }}</p>
+{% endif %}
+
+<form method="post" class="form quote-form" id="quote-form">
+    <div class="form-group">
+        <label for="issuer_client_id">Generator</label>
+        <select id="issuer_client_id" name="issuer_client_id" required>
+            {% for c in clients %}
+            <option value="{{ c.id }}" {% if quote and quote.issuer_client_id == c.id %}selected{% endif %}>{{ c.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="client_id">Receiver</label>
+        <select id="client_id" name="client_id" required>
+            {% for c in clients %}
+            <option value="{{ c.id }}" {% if quote and quote.client_id == c.id %}selected{% endif %}>{{ c.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="discount">Discount (%)</label>
+        <input type="number" id="discount" name="discount" step="0.01" min="0" max="100" value="{{ quote.discount if quote else 0 }}">
+    </div>
+
+    {% if is_edit %}
+    <div class="form-group">
+        <label for="status">Status</label>
+        <select id="status" name="status" required>
+            {% for status_option in ["pending", "sent", "approved", "declined"] %}
+            <option value="{{ status_option }}" {% if quote.status == status_option %}selected{% endif %}>{{ status_option }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    {% endif %}
+
+    <h2>Items</h2>
+    <div id="items-container">
+        {% if quote %}
+        {% for item in quote["items"] %}
+        {{ item_fields(item) }}
+        {% endfor %}
+        {% endif %}
+    </div>
+
+    <div class="form-actions">
+        <button type="button" id="add-item" class="btn btn-secondary">Add item</button>
+    </div>
+
+    <p class="suggestion-result">Grand total: $<span id="grand-total">0.00</span></p>
+
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary" id="submit-button">Save</button>
+        <a href="{{ url_for('list_quotes') }}" class="btn btn-secondary">Cancel</a>
+    </div>
+</form>
+
+<template id="item-template">
+    {{ item_fields() }}
+</template>
+
+<script>
+    const printers = {{ printers | tojson }};
+    const filamentTypes = {{ filament_types | tojson }};
+
+    const form = document.getElementById("quote-form");
+    const itemsContainer = document.getElementById("items-container");
+    const itemTemplate = document.getElementById("item-template");
+    const addItemButton = document.getElementById("add-item");
+    const discountInput = document.getElementById("discount");
+    const grandTotalOutput = document.getElementById("grand-total");
+    const submitButton = document.getElementById("submit-button");
+
+    function flashUpdate(el) {
+        el.classList.remove("total-updated");
+        clearTimeout(el._flashTimeout);
+        requestAnimationFrame(() => el.classList.add("total-updated"));
+        el._flashTimeout = setTimeout(() => el.classList.remove("total-updated"), 400);
+    }
+
+    function setText(el, value) {
+        if (el.textContent !== value) {
+            el.textContent = value;
+            flashUpdate(el);
+        }
+    }
+
+    function calculateItemTotal(itemEl) {
+        const printerId = Number(itemEl.querySelector("[name=printer_id]").value);
+        const filamentTypeId = Number(itemEl.querySelector("[name=filament_type_id]").value);
+        const quantity = Number(itemEl.querySelector("[name=quantity]").value) || 0;
+        const weightG = Number(itemEl.querySelector("[name=weight_g]").value) || 0;
+        const timeH = Number(itemEl.querySelector("[name=time_h]").value) || 0;
+        const margin = Number(itemEl.querySelector("[name=margin]").value) || 0;
+
+        const printer = printers.find(p => p.id === printerId);
+        const filamentType = filamentTypes.find(f => f.id === filamentTypeId);
+        const hourlyCost = printer ? printer.hourly_cost : 0;
+        const costPerKg = filamentType ? filamentType.cost_per_kg : 0;
+
+        const filamentCost = (weightG / 1000) * costPerKg;
+        const printingCost = timeH * hourlyCost;
+        const unitPrice = (filamentCost + printingCost) * (1 + margin / 100);
+        const total = unitPrice * quantity;
+
+        setText(itemEl.querySelector(".item-total"), total.toFixed(2));
+        return total;
+    }
+
+    function updateRemoveButtons() {
+        const items = itemsContainer.querySelectorAll(".quote-item");
+        items.forEach(itemEl => {
+            itemEl.querySelector(".remove-item").disabled = items.length <= 1;
+        });
+    }
+
+    function updateSubmitState() {
+        const hasItems = itemsContainer.querySelectorAll(".quote-item").length > 0;
+        submitButton.disabled = !hasItems || !form.checkValidity();
+    }
+
+    function calculateGrandTotal() {
+        let subtotal = 0;
+        itemsContainer.querySelectorAll(".quote-item").forEach(itemEl => {
+            subtotal += calculateItemTotal(itemEl);
+        });
+        const discount = Number(discountInput.value) || 0;
+        const grandTotal = subtotal * (1 - discount / 100);
+        setText(grandTotalOutput, grandTotal.toFixed(2));
+        updateRemoveButtons();
+        updateSubmitState();
+    }
+
+    function addItem() {
+        itemsContainer.appendChild(itemTemplate.content.cloneNode(true));
+        calculateGrandTotal();
+    }
+
+    addItemButton.addEventListener("click", addItem);
+
+    itemsContainer.addEventListener("click", (event) => {
+        if (!event.target.classList.contains("remove-item")) {
+            return;
+        }
+        if (itemsContainer.querySelectorAll(".quote-item").length <= 1) {
+            return;
+        }
+        if (!confirm("Remove this item?")) {
+            return;
+        }
+        event.target.closest(".quote-item").remove();
+        calculateGrandTotal();
+    });
+
+    form.addEventListener("input", calculateGrandTotal);
+    form.addEventListener("change", calculateGrandTotal);
+
+    if (itemsContainer.querySelectorAll(".quote-item").length === 0) {
+        addItem();
+    } else {
+        calculateGrandTotal();
+    }
+</script>
+{% endblock %}

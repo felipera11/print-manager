@@ -16,6 +16,15 @@ CLIENT_PAYLOAD = {
     "phone": None,
 }
 
+ISSUER_CLIENT_PAYLOAD = {
+    "name": "Print Manager 3D",
+    "email": "contact@printmanager3d.com",
+    "cnpj": "98.765.432/0001-10",
+    "address": "Av. Joao de Camargo, 510 - Santa Rita do Sapucai, MG",
+    "mobile": "+55 35 98888-0000",
+    "phone": None,
+}
+
 FILAMENT_TYPE_PAYLOAD = {
     "type": "PLA",
     "brand": "Elegoo",
@@ -33,6 +42,13 @@ def printer(client):
 @pytest.fixture
 def quote_client(client):
     created = client.post("/api/v1/clients/", json=CLIENT_PAYLOAD).json()
+    yield created
+    client.delete(f"/api/v1/clients/{created['id']}")
+
+
+@pytest.fixture
+def issuer_client(client):
+    created = client.post("/api/v1/clients/", json=ISSUER_CLIENT_PAYLOAD).json()
     yield created
     client.delete(f"/api/v1/clients/{created['id']}")
 
@@ -66,9 +82,10 @@ def expected_unit_price_and_total(item):
     return unit_price, total
 
 
-def test_create_with_items(client, printer, quote_client, filament_type):
+def test_create_with_items(client, printer, quote_client, issuer_client, filament_type):
     payload = {
         "client_id": quote_client["id"],
+        "issuer_client_id": issuer_client["id"],
         "discount": 10,
         "items": [item_payload(printer, filament_type)],
     }
@@ -93,13 +110,14 @@ def test_create_with_items(client, printer, quote_client, filament_type):
     client.delete(f"/api/v1/quotes/{data['id']}")
 
 
-def test_total_calculation(client, printer, quote_client, filament_type):
+def test_total_calculation(client, printer, quote_client, issuer_client, filament_type):
     items = [
         item_payload(printer, filament_type, part_name="Phone stand", quantity=2, weight_g=100, time_h=2, margin=20),
         item_payload(printer, filament_type, part_name="Keychain", quantity=5, weight_g=20, time_h=0.5, margin=50),
     ]
     payload = {
         "client_id": quote_client["id"],
+        "issuer_client_id": issuer_client["id"],
         "discount": 15,
         "items": items,
     }
@@ -120,9 +138,10 @@ def test_total_calculation(client, printer, quote_client, filament_type):
     client.delete(f"/api/v1/quotes/{data['id']}")
 
 
-def test_list(client, printer, quote_client, filament_type):
+def test_list(client, printer, quote_client, issuer_client, filament_type):
     payload = {
         "client_id": quote_client["id"],
+        "issuer_client_id": issuer_client["id"],
         "discount": 0,
         "items": [item_payload(printer, filament_type)],
     }
@@ -135,9 +154,63 @@ def test_list(client, printer, quote_client, filament_type):
     client.delete(f"/api/v1/quotes/{created['id']}")
 
 
-def test_delete(client, printer, quote_client, filament_type):
+def test_update_quote(client, printer, quote_client, issuer_client, filament_type):
     payload = {
         "client_id": quote_client["id"],
+        "issuer_client_id": issuer_client["id"],
+        "discount": 10,
+        "items": [item_payload(printer, filament_type)],
+    }
+    created = client.post("/api/v1/quotes/", json=payload).json()
+    assert created["status"] == "pending"
+
+    update_payload = {
+        "client_id": quote_client["id"],
+        "issuer_client_id": issuer_client["id"],
+        "discount": 20,
+        "status": "approved",
+        "items": [
+            item_payload(printer, filament_type, part_name="Updated stand", quantity=1),
+            item_payload(printer, filament_type, part_name="Extra keychain", quantity=3, weight_g=20, time_h=0.5, margin=50),
+        ],
+    }
+    response = client.put(f"/api/v1/quotes/{created['id']}", json=update_payload)
+    assert response.status_code == 200
+    data = response.json()
+
+    assert data["status"] == "approved"
+    assert data["discount"] == 20
+    assert len(data["items"]) == 2
+    assert {item["part_name"] for item in data["items"]} == {"Updated stand", "Extra keychain"}
+
+    item_totals = [expected_unit_price_and_total(item)[1] for item in update_payload["items"]]
+    expected_quote_total = round(sum(item_totals) * (1 - update_payload["discount"] / 100), 2)
+    assert data["total"] == expected_quote_total
+
+    client.delete(f"/api/v1/quotes/{created['id']}")
+
+
+def test_pdf_returns_bytes(client, printer, quote_client, issuer_client, filament_type):
+    payload = {
+        "client_id": quote_client["id"],
+        "issuer_client_id": issuer_client["id"],
+        "discount": 10,
+        "items": [item_payload(printer, filament_type)],
+    }
+    created = client.post("/api/v1/quotes/", json=payload).json()
+
+    response = client.get(f"/api/v1/quotes/{created['id']}/pdf")
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "application/pdf"
+    assert response.content.startswith(b"%PDF")
+
+    client.delete(f"/api/v1/quotes/{created['id']}")
+
+
+def test_delete(client, printer, quote_client, issuer_client, filament_type):
+    payload = {
+        "client_id": quote_client["id"],
+        "issuer_client_id": issuer_client["id"],
         "discount": 0,
         "items": [item_payload(printer, filament_type)],
     }

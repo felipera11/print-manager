@@ -1,13 +1,17 @@
 from datetime import date as date_type
+from typing import Literal
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.orm import Session
 
 from database import get_db
 from models import Client, FilamentType, Printer, Quote, QuoteItem
+from quote_pdf import build_quote_pdf
 
 router = APIRouter()
+
+QuoteStatus = Literal["pending", "sent", "approved", "declined"]
 
 
 class QuoteItemInput(BaseModel):
@@ -38,17 +42,20 @@ class QuoteItemResponse(BaseModel):
 
 class QuoteBase(BaseModel):
     client_id: int
+    issuer_client_id: int
     discount: float = 0
+    status: QuoteStatus = "pending"
     items: list[QuoteItemInput] = Field(min_length=1)
 
 
 class QuoteResponse(BaseModel):
     id: int
     client_id: int
+    issuer_client_id: int
     discount: float
     total: float
     date: date_type
-    status: str
+    status: QuoteStatus
     items: list[QuoteItemResponse]
 
 
@@ -135,6 +142,7 @@ def serialize_quote(db_quote: Quote, db: Session) -> dict:
     return {
         "id": db_quote.id,
         "client_id": db_quote.client_id,
+        "issuer_client_id": db_quote.issuer_client_id,
         "discount": db_quote.discount,
         "total": db_quote.total,
         "date": db_quote.date,
@@ -156,11 +164,14 @@ def get_quote(quote_id: int, db: Session = Depends(get_db)):
 @router.post("/", response_model=QuoteResponse, status_code=201)
 def create_quote(quote_data: QuoteBase, db: Session = Depends(get_db)):
     get_client_or_404(quote_data.client_id, db)
+    get_client_or_404(quote_data.issuer_client_id, db)
     quote_items = build_quote_items(quote_data.items, db)
 
     db_quote = Quote(
         client_id=quote_data.client_id,
+        issuer_client_id=quote_data.issuer_client_id,
         discount=quote_data.discount,
+        status=quote_data.status,
         total=calculate_quote_total([item.total for item in quote_items], quote_data.discount),
         date=date_type.today(),
     )
@@ -180,16 +191,34 @@ def create_quote(quote_data: QuoteBase, db: Session = Depends(get_db)):
 def update_quote(quote_id: int, quote_data: QuoteBase, db: Session = Depends(get_db)):
     db_quote = get_quote_or_404(quote_id, db)
     get_client_or_404(quote_data.client_id, db)
+    get_client_or_404(quote_data.issuer_client_id, db)
 
     quote_items = replace_quote_items(quote_id, quote_data.items, db)
 
     db_quote.client_id = quote_data.client_id
+    db_quote.issuer_client_id = quote_data.issuer_client_id
     db_quote.discount = quote_data.discount
+    db_quote.status = quote_data.status
     db_quote.total = calculate_quote_total([item.total for item in quote_items], quote_data.discount)
 
     db.commit()
     db.refresh(db_quote)
     return serialize_quote(db_quote, db)
+
+
+@router.get("/{quote_id}/pdf")
+def get_quote_pdf(quote_id: int, db: Session = Depends(get_db)):
+    db_quote = get_quote_or_404(quote_id, db)
+    recipient = get_client_or_404(db_quote.client_id, db)
+    issuer = get_client_or_404(db_quote.issuer_client_id, db)
+    items = db.query(QuoteItem).filter(QuoteItem.quote_id == quote_id).all()
+
+    pdf_bytes = build_quote_pdf(db_quote, issuer, recipient, items)
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename=quote_{quote_id}.pdf"},
+    )
 
 
 @router.delete("/{quote_id}", status_code=204)
