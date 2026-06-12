@@ -46,6 +46,7 @@
                 <th>Printer</th>
                 <th>Weight (g)</th>
                 <th>Time (h)</th>
+                <th>Cost</th>
                 <th>Price</th>
                 <th>Date</th>
                 <th>Status</th>
@@ -60,6 +61,7 @@
                 <td>{{ print_item.printer.name if print_item.printer else "-" }}</td>
                 <td>{{ print_item.weight_g }}</td>
                 <td>{{ print_item.time_h }}</td>
+                <td>{{ print_item.cost }}</td>
                 <td>{{ print_item.price }}</td>
                 <td>{{ print_item.date }}</td>
                 <td>{{ print_item.status }}</td>

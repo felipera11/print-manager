@@ -47,6 +47,7 @@ CREATE TABLE prints (
     client_id INTEGER NOT NULL REFERENCES clients(id),
     weight_g NUMERIC(10, 2) NOT NULL,
     time_h NUMERIC(10, 2) NOT NULL,
+    cost NUMERIC(10, 2) NOT NULL,
     price NUMERIC(10, 2) NOT NULL,
     date DATE NOT NULL,
     notes TEXT,

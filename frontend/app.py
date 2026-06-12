@@ -11,7 +11,8 @@ BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
 
 @app.route("/")
 def index():
-    return "ok"
+    dashboard = requests.get(f"{BACKEND_URL}/api/v1/dashboard/").json()
+    return render_template("dashboard.html", dashboard=dashboard)
 
 
 @app.route("/printers")
@@ -356,6 +357,7 @@ def print_form_payload():
         "client_id": int(request.form["client_id"]),
         "weight_g": float(request.form["weight_g"]),
         "time_h": float(request.form["time_h"]),
+        "price": float(request.form["price"]),
         "date": request.form["date"],
         "notes": request.form["notes"] or None,
         "spool_ids": [int(spool_id) for spool_id in request.form.getlist("spool_ids")],
@@ -404,6 +406,19 @@ def reorder_queue():
     print_ids = [int(print_id) for print_id in request.form.getlist("print_id")]
     requests.patch(f"{BACKEND_URL}/api/v1/prints/reorder", json={"print_ids": print_ids})
     return redirect(url_for("print_queue"))
+
+
+@app.route("/calculator")
+def calculator():
+    printers = requests.get(f"{BACKEND_URL}/api/v1/printers/").json()
+    spools = requests.get(f"{BACKEND_URL}/api/v1/spools/").json()
+    filament_types = requests.get(f"{BACKEND_URL}/api/v1/filament-types/").json()
+    return render_template(
+        "calculator.html",
+        printers=printers,
+        spools=spools,
+        filament_types=filament_types,
+    )
 
 
 if __name__ == "__main__":

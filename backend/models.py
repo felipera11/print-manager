@@ -64,6 +64,7 @@ class Print(Base):
     client_id = Column(Integer, ForeignKey("clients.id"), nullable=False)
     weight_g = Column(Numeric(10, 2), nullable=False)
     time_h = Column(Numeric(10, 2), nullable=False)
+    cost = Column(Numeric(10, 2), nullable=False)
     price = Column(Numeric(10, 2), nullable=False)
     date = Column(Date, nullable=False)
     notes = Column(Text)
@@ -76,3 +77,14 @@ class PrintSpool(Base):
 
     print_id = Column(Integer, ForeignKey("prints.id"), primary_key=True)
     spool_id = Column(Integer, ForeignKey("spools.id"), primary_key=True)
+
+
+class Quote(Base):
+    __tablename__ = "quotes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey("clients.id"), nullable=False)
+    discount = Column(Numeric(5, 2), nullable=False, default=0)
+    total = Column(Numeric(10, 2), nullable=False)
+    date = Column(Date, nullable=False)
+    status = Column(String(20), nullable=False, default="pending")

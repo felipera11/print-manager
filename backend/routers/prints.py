@@ -23,6 +23,7 @@ class PrintBase(BaseModel):
     client_id: int
     weight_g: float
     time_h: float
+    price: float
     date: date_type
     notes: str | None = None
     status: PrintStatus = "queued"
@@ -46,6 +47,7 @@ class PrintResponse(BaseModel):
     client_id: int
     weight_g: float
     time_h: float
+    cost: float
     price: float
     date: date_type
     notes: str | None = None
@@ -95,6 +97,7 @@ def serialize_print(db_print: Print, db: Session) -> dict:
         "client_id": db_print.client_id,
         "weight_g": db_print.weight_g,
         "time_h": db_print.time_h,
+        "cost": db_print.cost,
         "price": db_print.price,
         "date": db_print.date,
         "notes": db_print.notes,
@@ -121,7 +124,7 @@ def calculate_filament_cost(spools: list[Spool], weight_g: float, db: Session) -
     )
 
 
-def calculate_price(weight_g: float, time_h: float, hourly_cost: float, filament_cost: float) -> float:
+def calculate_cost(weight_g: float, time_h: float, hourly_cost: float, filament_cost: float) -> float:
     printing_cost = time_h * hourly_cost
     return round(filament_cost + printing_cost, 2)
 
@@ -229,7 +232,7 @@ def create_print(print_data: PrintBase, db: Session = Depends(get_db)):
     validate_single_printing_per_printer(print_data.printer_id, print_data.status, db)
 
     filament_cost = calculate_filament_cost(spools, print_data.weight_g, db)
-    price = calculate_price(print_data.weight_g, print_data.time_h, float(printer.hourly_cost), filament_cost)
+    cost = calculate_cost(print_data.weight_g, print_data.time_h, float(printer.hourly_cost), filament_cost)
 
     db_print = Print(
         part_name=print_data.part_name,
@@ -237,7 +240,8 @@ def create_print(print_data: PrintBase, db: Session = Depends(get_db)):
         client_id=print_data.client_id,
         weight_g=print_data.weight_g,
         time_h=print_data.time_h,
-        price=price,
+        cost=cost,
+        price=print_data.price,
         date=print_data.date,
         notes=print_data.notes,
         status=print_data.status,
@@ -269,14 +273,15 @@ def update_print(print_id: int, print_data: PrintBase, db: Session = Depends(get
     validate_single_printing_per_printer(print_data.printer_id, print_data.status, db, exclude_print_id=print_id)
 
     filament_cost = calculate_filament_cost(new_spools, print_data.weight_g, db)
-    price = calculate_price(print_data.weight_g, print_data.time_h, float(printer.hourly_cost), filament_cost)
+    cost = calculate_cost(print_data.weight_g, print_data.time_h, float(printer.hourly_cost), filament_cost)
 
     db_print.part_name = print_data.part_name
     db_print.printer_id = print_data.printer_id
     db_print.client_id = print_data.client_id
     db_print.weight_g = print_data.weight_g
     db_print.time_h = print_data.time_h
-    db_print.price = price
+    db_print.cost = cost
+    db_print.price = print_data.price
     db_print.date = print_data.date
     db_print.notes = print_data.notes
     db_print.status = print_data.status

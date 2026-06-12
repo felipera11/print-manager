@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}Calculator{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Cost calculator</h1>
+</div>
+
+<div class="card">
+    <form class="form" id="calculator-form">
+        <div class="form-group">
+            <label for="printer_id">Printer</label>
+            <select id="printer_id">
+                {% for printer in printers %}
+                <option value="{{ printer.id }}">{{ printer.name }} - {{ printer.brand }} (${{ printer.hourly_cost }}/h)</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="spool_ids">Spools used</label>
+            <select id="spool_ids" multiple>
+                {% for spool in spools %}
+                <option value="{{ spool.id }}">#{{ spool.number }} - {{ spool.color }} ({{ spool.remaining_weight_g }}g remaining)</option>
+                {% endfor %}
+            </select>
+            <p class="help-text">Hold Ctrl (or Cmd) to select multiple spools. The weight is split evenly across them.</p>
+        </div>
+
+        <div class="form-group">
+            <label for="weight_g">Weight (g)</label>
+            <input type="number" id="weight_g" step="0.01" min="0" value="0">
+        </div>
+
+        <div class="form-group">
+            <label for="time_h">Print time (h)</label>
+            <input type="number" id="time_h" step="0.01" min="0" value="0">
+        </div>
+
+        <div class="form-group">
+            <label for="margin">Margin (%)</label>
+            <input type="number" id="margin" step="0.01" min="0" value="0">
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2>Result</h2>
+    </div>
+    <p>Filament cost: $<span id="filament-cost">0.00</span></p>
+    <p>Printing cost: $<span id="printing-cost">0.00</span></p>
+    <p class="suggestion-result">Production cost: $<span id="total-cost">0.00</span></p>
+    <p class="suggestion-result">Suggested price: $<span id="suggested-price">0.00</span></p>
+</div>
+
+<script>
+    const printers = {{ printers | tojson }};
+    const spools = {{ spools | tojson }};
+    const filamentTypes = {{ filament_types | tojson }};
+
+    const printerSelect = document.getElementById("printer_id");
+    const spoolSelect = document.getElementById("spool_ids");
+    const weightInput = document.getElementById("weight_g");
+    const timeInput = document.getElementById("time_h");
+    const marginInput = document.getElementById("margin");
+
+    const filamentCostOutput = document.getElementById("filament-cost");
+    const printingCostOutput = document.getElementById("printing-cost");
+    const totalCostOutput = document.getElementById("total-cost");
+    const suggestedPriceOutput = document.getElementById("suggested-price");
+
+    function calculate() {
+        const printer = printers.find(p => p.id === Number(printerSelect.value));
+        const hourlyCost = printer ? printer.hourly_cost : 0;
+        const weightG = Number(weightInput.value) || 0;
+        const timeH = Number(timeInput.value) || 0;
+        const margin = Number(marginInput.value) || 0;
+
+        const selectedSpoolIds = Array.from(spoolSelect.selectedOptions).map(option => Number(option.value));
+        let filamentCost = 0;
+        if (selectedSpoolIds.length > 0) {
+            const weightPerSpool = weightG / selectedSpoolIds.length;
+            for (const spoolId of selectedSpoolIds) {
+                const spool = spools.find(s => s.id === spoolId);
+                const filamentType = filamentTypes.find(t => t.id === spool.type_id);
+                filamentCost += (weightPerSpool / 1000) * filamentType.cost_per_kg;
+            }
+        }
+
+        const printingCost = timeH * hourlyCost;
+        const totalCost = filamentCost + printingCost;
+        const suggestedPrice = totalCost * (1 + margin / 100);
+
+        filamentCostOutput.textContent = filamentCost.toFixed(2);
+        printingCostOutput.textContent = printingCost.toFixed(2);
+        totalCostOutput.textContent = totalCost.toFixed(2);
+        suggestedPriceOutput.textContent = suggestedPrice.toFixed(2);
+    }
+
+    [printerSelect, spoolSelect, weightInput, timeInput, marginInput].forEach(element => {
+        element.addEventListener("input", calculate);
+        element.addEventListener("change", calculate);
+    });
+
+    calculate();
+</script>
+{% endblock %}

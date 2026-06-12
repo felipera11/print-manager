@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Dashboard</h1>
+</div>
+
+<div class="dashboard-stats">
+    <div class="card stat-card">
+        <h2>Monthly spend</h2>
+        <p class="stat-value">R$ {{ "%.2f"|format(dashboard.monthly_spend) }}</p>
+    </div>
+    <div class="card stat-card">
+        <h2>Open quotes</h2>
+        <p class="stat-value">{{ dashboard.open_quotes }}</p>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2>Critical spools</h2>
+    </div>
+    {% if dashboard.critical_spools %}
+    <div class="table-wrapper">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Spool</th>
+                    <th>Type</th>
+                    <th>Color</th>
+                    <th>Remaining (g)</th>
+                    <th>Total (g)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for spool in dashboard.critical_spools %}
+                <tr>
+                    <td>#{{ spool.number }}</td>
+                    <td>{{ spool.type }}</td>
+                    <td>{{ spool.color }}</td>
+                    <td>{{ spool.remaining_weight_g }}</td>
+                    <td>{{ spool.total_weight_g }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="empty-state">No spools below 20% remaining.</p>
+    {% endif %}
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2>Recent prints</h2>
+    </div>
+    {% if dashboard.recent_prints %}
+    <div class="table-wrapper">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Part</th>
+                    <th>Client</th>
+                    <th>Date</th>
+                    <th>Price</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for print_item in dashboard.recent_prints %}
+                <tr>
+                    <td>{{ print_item.part_name }}</td>
+                    <td>{{ print_item.client }}</td>
+                    <td>{{ print_item.date }}</td>
+                    <td>R$ {{ "%.2f"|format(print_item.price) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="empty-state">No prints registered yet.</p>
+    {% endif %}
+</div>
+{% endblock %}

@@ -37,6 +37,7 @@ PRINT_PAYLOAD = {
     "part_name": "Phone stand",
     "weight_g": 100,
     "time_h": 2,
+    "price": 150.0,
     "date": "2026-06-01",
     "notes": "Sample print",
 }
@@ -95,7 +96,7 @@ def spool2(client, filament_type, spool_model):
     client.delete(f"/api/v1/spools/{created['id']}")
 
 
-def test_create_calculates_price(client, printer, print_client, spool):
+def test_create_calculates_cost(client, printer, print_client, spool):
     payload = {
         **PRINT_PAYLOAD,
         "printer_id": printer["id"],
@@ -108,7 +109,8 @@ def test_create_calculates_price(client, printer, print_client, spool):
 
     filament_cost = (payload["weight_g"] / 1000) * FILAMENT_TYPE_PAYLOAD["cost_per_kg"]
     printing_cost = payload["time_h"] * PRINTER_PAYLOAD["hourly_cost"]
-    assert data["price"] == filament_cost + printing_cost
+    assert data["cost"] == filament_cost + printing_cost
+    assert data["price"] == payload["price"]
     assert data["spool_ids"] == [spool["id"]]
     assert data["status"] == "queued"
     assert isinstance(data["queue_position"], int)
