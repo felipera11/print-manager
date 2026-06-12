@@ -40,3 +40,15 @@ class Spool(Base):
     spool_model_id = Column(Integer, ForeignKey("spool_models.id"), nullable=False)
     total_weight_g = Column(Numeric(10, 2), nullable=False)
     remaining_weight_g = Column(Numeric(10, 2), nullable=False)
+
+
+class Client(Base):
+    __tablename__ = "clients"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(150), nullable=False)
+    email = Column(String(150), nullable=False)
+    cnpj = Column(String(20), nullable=False)
+    address = Column(String(255))
+    mobile = Column(String(20), nullable=False)
+    phone = Column(String(20))

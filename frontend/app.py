@@ -211,5 +211,51 @@ def spool_form_payload():
     }
 
 
+@app.route("/clients")
+def list_clients():
+    response = requests.get(f"{BACKEND_URL}/api/v1/clients/")
+    return render_template("clients/index.html", clients=response.json())
+
+
+@app.route("/clients/new")
+def new_client():
+    return render_template("clients/form.html", client=None)
+
+
+@app.route("/clients/new", methods=["POST"])
+def create_client():
+    requests.post(f"{BACKEND_URL}/api/v1/clients/", json=client_form_payload())
+    return redirect(url_for("list_clients"))
+
+
+@app.route("/clients/<int:client_id>/edit")
+def edit_client(client_id):
+    response = requests.get(f"{BACKEND_URL}/api/v1/clients/{client_id}")
+    return render_template("clients/form.html", client=response.json())
+
+
+@app.route("/clients/<int:client_id>/edit", methods=["POST"])
+def update_client(client_id):
+    requests.put(f"{BACKEND_URL}/api/v1/clients/{client_id}", json=client_form_payload())
+    return redirect(url_for("list_clients"))
+
+
+@app.route("/clients/<int:client_id>/delete", methods=["POST"])
+def delete_client(client_id):
+    requests.delete(f"{BACKEND_URL}/api/v1/clients/{client_id}")
+    return redirect(url_for("list_clients"))
+
+
+def client_form_payload():
+    return {
+        "name": request.form["name"],
+        "email": request.form["email"],
+        "cnpj": request.form["cnpj"],
+        "address": request.form["address"] or None,
+        "mobile": request.form["mobile"],
+        "phone": request.form["phone"] or None,
+    }
+
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
