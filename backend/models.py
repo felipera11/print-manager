@@ -88,3 +88,19 @@ class Quote(Base):
     total = Column(Numeric(10, 2), nullable=False)
     date = Column(Date, nullable=False)
     status = Column(String(20), nullable=False, default="pending")
+
+
+class QuoteItem(Base):
+    __tablename__ = "quote_items"
+
+    id = Column(Integer, primary_key=True, index=True)
+    quote_id = Column(Integer, ForeignKey("quotes.id"), nullable=False)
+    part_name = Column(String(150), nullable=False)
+    quantity = Column(Integer, nullable=False)
+    weight_g = Column(Numeric(10, 2), nullable=False)
+    time_h = Column(Numeric(10, 2), nullable=False)
+    margin = Column(Numeric(5, 2), nullable=False)
+    printer_id = Column(Integer, ForeignKey("printers.id"), nullable=False)
+    filament_type_id = Column(Integer, ForeignKey("filament_types.id"), nullable=False)
+    unit_price = Column(Numeric(10, 2), nullable=False)
+    total = Column(Numeric(10, 2), nullable=False)

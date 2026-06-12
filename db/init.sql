@@ -78,6 +78,8 @@ CREATE TABLE quote_items (
     weight_g NUMERIC(10, 2) NOT NULL,
     time_h NUMERIC(10, 2) NOT NULL,
     margin NUMERIC(5, 2) NOT NULL,
+    printer_id INTEGER NOT NULL REFERENCES printers(id),
+    filament_type_id INTEGER NOT NULL REFERENCES filament_types(id),
     unit_price NUMERIC(10, 2) NOT NULL,
     total NUMERIC(10, 2) NOT NULL
 );
