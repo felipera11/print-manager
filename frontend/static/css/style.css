@@ -381,6 +381,30 @@ textarea.is-invalid:focus {
     font-weight: 500;
 }
 
+.alert-error {
+    padding: var(--space-sm) var(--space-md);
+    margin-bottom: var(--space-md);
+    color: var(--color-danger);
+    background-color: #fef2f2;
+    border: 1px solid var(--color-danger);
+    border-radius: var(--radius);
+}
+
+.current-print-section {
+    margin-bottom: var(--space-lg);
+}
+
+.drag-handle {
+    cursor: grab;
+    color: var(--color-text-muted);
+    padding: 0 var(--space-sm);
+    user-select: none;
+}
+
+.table tbody tr.dragging {
+    opacity: 0.5;
+}
+
 /* ==========================================================================
    Responsive
    ========================================================================== */

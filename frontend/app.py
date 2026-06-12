@@ -1,4 +1,5 @@
 import os
+from datetime import date
 
 import requests
 from flask import Flask, redirect, render_template, request, url_for
@@ -255,6 +256,154 @@ def client_form_payload():
         "mobile": request.form["mobile"],
         "phone": request.form["phone"] or None,
     }
+
+
+@app.route("/prints")
+def list_prints():
+    filters = {}
+    client_id = request.args.get("client_id")
+    printer_id = request.args.get("printer_id")
+    if client_id:
+        filters["client_id"] = client_id
+    if printer_id:
+        filters["printer_id"] = printer_id
+
+    prints = requests.get(f"{BACKEND_URL}/api/v1/prints/", params=filters).json()
+    clients = requests.get(f"{BACKEND_URL}/api/v1/clients/").json()
+    printers = requests.get(f"{BACKEND_URL}/api/v1/printers/").json()
+
+    clients_by_id = {c["id"]: c for c in clients}
+    printers_by_id = {p["id"]: p for p in printers}
+    for print_item in prints:
+        print_item["client"] = clients_by_id.get(print_item["client_id"])
+        print_item["printer"] = printers_by_id.get(print_item["printer_id"])
+
+    return render_template(
+        "prints/index.html",
+        prints=prints,
+        clients=clients,
+        printers=printers,
+        selected_client_id=client_id,
+        selected_printer_id=printer_id,
+    )
+
+
+@app.route("/prints/new")
+def new_print():
+    return render_print_form(print_item=None, is_edit=False)
+
+
+@app.route("/prints/new", methods=["POST"])
+def create_print():
+    payload = print_form_payload()
+    response = requests.post(f"{BACKEND_URL}/api/v1/prints/", json=payload)
+    if response.status_code >= 400:
+        return render_print_form(print_item=payload, is_edit=False, error=extract_error_message(response))
+    return redirect(url_for("list_prints"))
+
+
+@app.route("/prints/<int:print_id>/edit")
+def edit_print(print_id):
+    print_item = requests.get(f"{BACKEND_URL}/api/v1/prints/{print_id}").json()
+    return render_print_form(print_item=print_item, is_edit=True)
+
+
+@app.route("/prints/<int:print_id>/edit", methods=["POST"])
+def update_print(print_id):
+    payload = print_form_payload()
+    response = requests.put(f"{BACKEND_URL}/api/v1/prints/{print_id}", json=payload)
+    if response.status_code >= 400:
+        payload["id"] = print_id
+        return render_print_form(print_item=payload, is_edit=True, error=extract_error_message(response))
+    return redirect(url_for("list_prints"))
+
+
+def render_print_form(print_item, is_edit, error=None):
+    printers = requests.get(f"{BACKEND_URL}/api/v1/printers/").json()
+    clients = requests.get(f"{BACKEND_URL}/api/v1/clients/").json()
+    spools = requests.get(f"{BACKEND_URL}/api/v1/spools/").json()
+    filament_types = requests.get(f"{BACKEND_URL}/api/v1/filament-types/").json()
+    return render_template(
+        "prints/form.html",
+        print_item=print_item,
+        is_edit=is_edit,
+        error=error,
+        printers=printers,
+        clients=clients,
+        spools=spools,
+        filament_types=filament_types,
+        today=print_item["date"] if print_item else date.today().isoformat(),
+    )
+
+
+def extract_error_message(response):
+    detail = response.json().get("detail")
+    if isinstance(detail, list):
+        return "; ".join(error["msg"] for error in detail)
+    return detail
+
+
+@app.route("/prints/<int:print_id>/delete", methods=["POST"])
+def delete_print(print_id):
+    requests.delete(f"{BACKEND_URL}/api/v1/prints/{print_id}")
+    return redirect(url_for("list_prints"))
+
+
+def print_form_payload():
+    payload = {
+        "part_name": request.form["part_name"],
+        "printer_id": int(request.form["printer_id"]),
+        "client_id": int(request.form["client_id"]),
+        "weight_g": float(request.form["weight_g"]),
+        "time_h": float(request.form["time_h"]),
+        "date": request.form["date"],
+        "notes": request.form["notes"] or None,
+        "spool_ids": [int(spool_id) for spool_id in request.form.getlist("spool_ids")],
+    }
+    if "status" in request.form:
+        payload["status"] = request.form["status"]
+    return payload
+
+
+@app.route("/queue")
+def print_queue():
+    queued = requests.get(f"{BACKEND_URL}/api/v1/prints/", params={"status": "queued"}).json()
+    printing = requests.get(f"{BACKEND_URL}/api/v1/prints/", params={"status": "printing"}).json()
+
+    clients = requests.get(f"{BACKEND_URL}/api/v1/clients/").json()
+    printers = requests.get(f"{BACKEND_URL}/api/v1/printers/").json()
+    clients_by_id = {c["id"]: c for c in clients}
+    printers_by_id = {p["id"]: p for p in printers}
+    for print_item in queued + printing:
+        print_item["client"] = clients_by_id.get(print_item["client_id"])
+        print_item["printer"] = printers_by_id.get(print_item["printer_id"])
+
+    printers_with_active_print = {p["printer_id"] for p in printing}
+
+    return render_template(
+        "queue/index.html",
+        printing_prints=printing,
+        queued_prints=queued,
+        printers_with_active_print=printers_with_active_print,
+        error=request.args.get("error"),
+    )
+
+
+@app.route("/queue/<int:print_id>/status", methods=["POST"])
+def update_queue_status(print_id):
+    response = requests.patch(
+        f"{BACKEND_URL}/api/v1/prints/{print_id}/status", json={"status": request.form["status"]}
+    )
+    if response.status_code >= 400:
+        return redirect(url_for("print_queue", error=response.json()["detail"]))
+    return redirect(url_for("print_queue"))
+
+
+@app.route("/queue/reorder", methods=["POST"])
+def reorder_queue():
+    print_ids = [int(print_id) for print_id in request.form.getlist("print_id")]
+    requests.patch(f"{BACKEND_URL}/api/v1/prints/reorder", json={"print_ids": print_ids})
+    return redirect(url_for("print_queue"))
 
 
 if __name__ == "__main__":

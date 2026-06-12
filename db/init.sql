@@ -26,7 +26,8 @@ CREATE TABLE spools (
     color VARCHAR(50) NOT NULL,
     spool_model_id INTEGER NOT NULL REFERENCES spool_models(id),
     total_weight_g NUMERIC(10, 2) NOT NULL,
-    remaining_weight_g NUMERIC(10, 2) NOT NULL
+    remaining_weight_g NUMERIC(10, 2) NOT NULL,
+    reserved_weight_g NUMERIC(10, 2) NOT NULL DEFAULT 0
 );
 
 CREATE TABLE clients (
@@ -48,7 +49,9 @@ CREATE TABLE prints (
     time_h NUMERIC(10, 2) NOT NULL,
     price NUMERIC(10, 2) NOT NULL,
     date DATE NOT NULL,
-    notes TEXT
+    notes TEXT,
+    status VARCHAR(20) NOT NULL DEFAULT 'queued',
+    queue_position INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE print_spools (

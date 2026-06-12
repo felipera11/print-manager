@@ -14,6 +14,7 @@
             <a href="{{ url_for('list_printers') }}" class="{{ 'active' if request.path.startswith('/printers') else '' }}">Printers</a>
             <a href="{{ url_for('list_filaments') }}" class="{{ 'active' if request.path.startswith('/filaments') else '' }}">Filaments &amp; Spools</a>
             <a href="/prints" class="{{ 'active' if request.path.startswith('/prints') else '' }}">Prints</a>
+            <a href="/queue" class="{{ 'active' if request.path.startswith('/queue') else '' }}">Queue</a>
             <a href="/quotes" class="{{ 'active' if request.path.startswith('/quotes') else '' }}">Quotes</a>
             <a href="/clients" class="{{ 'active' if request.path.startswith('/clients') else '' }}">Clients</a>
         </nav>

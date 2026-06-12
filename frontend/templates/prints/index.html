@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Prints{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Prints</h1>
+    <a href="{{ url_for('new_print') }}" class="btn btn-primary">New print</a>
+</div>
+
+<section class="card">
+    <form method="get" class="form">
+        <div class="form-group">
+            <label for="client_id">Client</label>
+            <select id="client_id" name="client_id">
+                <option value="">All clients</option>
+                {% for client in clients %}
+                <option value="{{ client.id }}" {% if selected_client_id|string == client.id|string %}selected{% endif %}>{{ client.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="printer_id">Printer</label>
+            <select id="printer_id" name="printer_id">
+                <option value="">All printers</option>
+                {% for printer in printers %}
+                <option value="{{ printer.id }}" {% if selected_printer_id|string == printer.id|string %}selected{% endif %}>{{ printer.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Filter</button>
+            <a href="{{ url_for('list_prints') }}" class="btn btn-secondary">Clear</a>
+        </div>
+    </form>
+</section>
+
+<div class="table-wrapper">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Part</th>
+                <th>Client</th>
+                <th>Printer</th>
+                <th>Weight (g)</th>
+                <th>Time (h)</th>
+                <th>Price</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th class="actions"></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for print_item in prints %}
+            <tr>
+                <td>{{ print_item.part_name }}</td>
+                <td>{{ print_item.client.name if print_item.client else "-" }}</td>
+                <td>{{ print_item.printer.name if print_item.printer else "-" }}</td>
+                <td>{{ print_item.weight_g }}</td>
+                <td>{{ print_item.time_h }}</td>
+                <td>{{ print_item.price }}</td>
+                <td>{{ print_item.date }}</td>
+                <td>{{ print_item.status }}</td>
+                <td class="actions">
+                    <div class="btn-group">
+                        <a href="{{ url_for('edit_print', print_id=print_item.id) }}" class="btn btn-secondary btn-sm">Edit</a>
+                        <form action="{{ url_for('delete_print', print_id=print_item.id) }}" method="post">
+                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Delete this print?')">Delete</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% if not prints %}
+<p class="empty-state">No prints registered yet.</p>
+{% endif %}
+{% endblock %}

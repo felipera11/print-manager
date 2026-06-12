@@ -21,6 +21,7 @@ class SpoolResponse(SpoolBase):
 
     id: int
     remaining_weight_g: float
+    reserved_weight_g: float
 
 
 def get_spool_or_404(spool_id: int, db: Session) -> Spool:
@@ -44,10 +45,11 @@ def list_spools(db: Session = Depends(get_db)):
 
 @router.get("/suggest", response_model=list[SpoolResponse])
 def suggest_spools(weight_g: float, type_id: int, db: Session = Depends(get_db)):
+    available_weight_g = Spool.remaining_weight_g - Spool.reserved_weight_g
     return (
         db.query(Spool)
-        .filter(Spool.type_id == type_id, Spool.remaining_weight_g >= weight_g)
-        .order_by(Spool.remaining_weight_g.asc())
+        .filter(Spool.type_id == type_id, available_weight_g >= weight_g)
+        .order_by(available_weight_g.asc())
         .all()
     )
 

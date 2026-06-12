@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block title %}Print queue{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Print queue</h1>
+    <a href="{{ url_for('new_print') }}" class="btn btn-primary">New print</a>
+</div>
+
+{% if error %}
+<p class="alert-error">{{ error }}</p>
+{% endif %}
+
+<section class="current-print-section">
+    <h2>Current print</h2>
+    {% if printing_prints %}
+    <div class="table-wrapper">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Part</th>
+                    <th>Client</th>
+                    <th>Printer</th>
+                    <th>Weight (g)</th>
+                    <th>Time (h)</th>
+                    <th class="actions"></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for print_item in printing_prints %}
+                <tr>
+                    <td>{{ print_item.part_name }}</td>
+                    <td>{{ print_item.client.name if print_item.client else "-" }}</td>
+                    <td>{{ print_item.printer.name if print_item.printer else "-" }}</td>
+                    <td>{{ print_item.weight_g }}</td>
+                    <td>{{ print_item.time_h }}</td>
+                    <td class="actions">
+                        <div class="btn-group">
+                            <form action="{{ url_for('update_queue_status', print_id=print_item.id) }}" method="post">
+                                <input type="hidden" name="status" value="completed">
+                                <button type="submit" class="btn btn-secondary btn-sm">Mark completed</button>
+                            </form>
+                            <form action="{{ url_for('update_queue_status', print_id=print_item.id) }}" method="post">
+                                <input type="hidden" name="status" value="failed">
+                                <button type="submit" class="btn btn-danger btn-sm">Mark failed</button>
+                            </form>
+                            <a href="{{ url_for('edit_print', print_id=print_item.id) }}" class="btn btn-secondary btn-sm">Edit</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="empty-state">No printer is currently printing.</p>
+    {% endif %}
+</section>
+
+<section>
+    <h2>Queue</h2>
+    {% if queued_prints %}
+    <div class="table-wrapper">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>Part</th>
+                    <th>Client</th>
+                    <th>Printer</th>
+                    <th>Weight (g)</th>
+                    <th>Time (h)</th>
+                    <th class="actions"></th>
+                </tr>
+            </thead>
+            <tbody id="queue-tbody">
+                {% for print_item in queued_prints %}
+                <tr data-print-id="{{ print_item.id }}">
+                    <td class="drag-handle" draggable="true" title="Drag to reorder">&#10021;</td>
+                    <td>{{ print_item.part_name }}</td>
+                    <td>{{ print_item.client.name if print_item.client else "-" }}</td>
+                    <td>{{ print_item.printer.name if print_item.printer else "-" }}</td>
+                    <td>{{ print_item.weight_g }}</td>
+                    <td>{{ print_item.time_h }}</td>
+                    <td class="actions">
+                        <div class="btn-group">
+                            {% if print_item.printer_id not in printers_with_active_print %}
+                            <form action="{{ url_for('update_queue_status', print_id=print_item.id) }}" method="post">
+                                <input type="hidden" name="status" value="printing">
+                                <button type="submit" class="btn btn-primary btn-sm">Start printing</button>
+                            </form>
+                            {% endif %}
+                            <form action="{{ url_for('update_queue_status', print_id=print_item.id) }}" method="post">
+                                <input type="hidden" name="status" value="completed">
+                                <button type="submit" class="btn btn-secondary btn-sm">Mark completed</button>
+                            </form>
+                            <form action="{{ url_for('update_queue_status', print_id=print_item.id) }}" method="post">
+                                <input type="hidden" name="status" value="failed">
+                                <button type="submit" class="btn btn-danger btn-sm">Mark failed</button>
+                            </form>
+                            <a href="{{ url_for('edit_print', print_id=print_item.id) }}" class="btn btn-secondary btn-sm">Edit</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <p class="help-text">Drag the &#10021; handle to reorder the queue.</p>
+    {% else %}
+    <p class="empty-state">No prints in the queue.</p>
+    {% endif %}
+</section>
+
+<script>
+    const queueBody = document.getElementById("queue-tbody");
+
+    if (queueBody) {
+        let draggedRow = null;
+
+        queueBody.querySelectorAll(".drag-handle").forEach(handle => {
+            handle.addEventListener("dragstart", () => {
+                draggedRow = handle.closest("tr");
+                draggedRow.classList.add("dragging");
+            });
+
+            handle.addEventListener("dragend", () => {
+                if (draggedRow) {
+                    draggedRow.classList.remove("dragging");
+                    draggedRow = null;
+                    submitQueueOrder();
+                }
+            });
+        });
+
+        queueBody.querySelectorAll("tr").forEach(row => {
+            row.addEventListener("dragover", (event) => {
+                event.preventDefault();
+                if (!draggedRow || row === draggedRow) {
+                    return;
+                }
+                const rect = row.getBoundingClientRect();
+                const insertBeforeTarget = (event.clientY - rect.top) / rect.height < 0.5;
+                queueBody.insertBefore(draggedRow, insertBeforeTarget ? row : row.nextSibling);
+            });
+        });
+    }
+
+    function submitQueueOrder() {
+        const printIds = Array.from(queueBody.querySelectorAll("tr")).map(row => row.dataset.printId);
+        const body = printIds.map(id => `print_id=${id}`).join("&");
+        fetch("{{ url_for('reorder_queue') }}", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: body,
+        });
+    }
+</script>
+{% endblock %}

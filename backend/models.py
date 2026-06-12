@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, Numeric, String
+from sqlalchemy import Boolean, Column, Date, ForeignKey, Integer, Numeric, String, Text
 
 from database import Base
 
@@ -40,6 +40,7 @@ class Spool(Base):
     spool_model_id = Column(Integer, ForeignKey("spool_models.id"), nullable=False)
     total_weight_g = Column(Numeric(10, 2), nullable=False)
     remaining_weight_g = Column(Numeric(10, 2), nullable=False)
+    reserved_weight_g = Column(Numeric(10, 2), nullable=False, default=0)
 
 
 class Client(Base):
@@ -52,3 +53,26 @@ class Client(Base):
     address = Column(String(255))
     mobile = Column(String(20), nullable=False)
     phone = Column(String(20))
+
+
+class Print(Base):
+    __tablename__ = "prints"
+
+    id = Column(Integer, primary_key=True, index=True)
+    part_name = Column(String(150), nullable=False)
+    printer_id = Column(Integer, ForeignKey("printers.id"), nullable=False)
+    client_id = Column(Integer, ForeignKey("clients.id"), nullable=False)
+    weight_g = Column(Numeric(10, 2), nullable=False)
+    time_h = Column(Numeric(10, 2), nullable=False)
+    price = Column(Numeric(10, 2), nullable=False)
+    date = Column(Date, nullable=False)
+    notes = Column(Text)
+    status = Column(String(20), nullable=False, default="queued")
+    queue_position = Column(Integer, nullable=False, default=0)
+
+
+class PrintSpool(Base):
+    __tablename__ = "print_spools"
+
+    print_id = Column(Integer, ForeignKey("prints.id"), primary_key=True)
+    spool_id = Column(Integer, ForeignKey("spools.id"), primary_key=True)
