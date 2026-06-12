@@ -9,9 +9,9 @@ router = APIRouter()
 
 
 class FilamentTypeBase(BaseModel):
-    name: str
-    temp_min: int
-    temp_max: int
+    type: str
+    brand: str
+    cost_per_kg: float
 
 
 class FilamentTypeResponse(FilamentTypeBase):

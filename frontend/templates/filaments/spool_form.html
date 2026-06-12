@@ -17,14 +17,9 @@
         <label for="type_id">Filament type</label>
         <select id="type_id" name="type_id" required>
             {% for filament_type in filament_types %}
-            <option value="{{ filament_type.id }}" {% if spool and spool.type_id == filament_type.id %}selected{% endif %}>{{ filament_type.name }}</option>
+            <option value="{{ filament_type.id }}" {% if spool and spool.type_id == filament_type.id %}selected{% endif %}>{{ filament_type.type }} - {{ filament_type.brand }}</option>
             {% endfor %}
         </select>
-    </div>
-
-    <div class="form-group">
-        <label for="brand">Brand</label>
-        <input type="text" id="brand" name="brand" value="{{ spool.brand if spool else '' }}" required>
     </div>
 
     <div class="form-group">
@@ -33,19 +28,28 @@
     </div>
 
     <div class="form-group">
+        <label for="spool_model_id">Spool model</label>
+        <select id="spool_model_id" name="spool_model_id" required>
+            {% for spool_model in spool_models %}
+            <option value="{{ spool_model.id }}" {% if spool and spool.spool_model_id == spool_model.id %}selected{% endif %}>{{ spool_model.name }} ({{ spool_model.weight_g }}g)</option>
+            {% endfor %}
+        </select>
+        <p class="help-text">Weight of the empty spool, used to calculate the remaining filament weight.</p>
+    </div>
+
+    <div class="form-group">
         <label for="total_weight_g">Total weight (g)</label>
         <input type="number" id="total_weight_g" name="total_weight_g" step="0.01" min="0" value="{{ spool.total_weight_g if spool else '' }}" required>
+        <p class="help-text">Weigh the spool with the filament on it and enter the total here.</p>
     </div>
 
+    {% if spool %}
     <div class="form-group">
-        <label for="remaining_weight_g">Remaining weight (g)</label>
-        <input type="number" id="remaining_weight_g" name="remaining_weight_g" step="0.01" min="0" value="{{ spool.remaining_weight_g if spool else '' }}" required>
+        <label for="remaining_weight_g">Remaining filament weight (g)</label>
+        <input type="number" id="remaining_weight_g" value="{{ spool.remaining_weight_g }}" disabled>
+        <p class="help-text">Calculated automatically as total weight minus the spool model weight.</p>
     </div>
-
-    <div class="form-group">
-        <label for="cost_per_kg">Cost per kg</label>
-        <input type="number" id="cost_per_kg" name="cost_per_kg" step="0.01" min="0" value="{{ spool.cost_per_kg if spool else '' }}" required>
-    </div>
+    {% endif %}
 
     <div class="form-actions">
         <button type="submit" class="btn btn-primary">Save</button>

@@ -1,7 +1,7 @@
 FILAMENT_TYPE_PAYLOAD = {
-    "name": "PLA",
-    "temp_min": 190,
-    "temp_max": 220,
+    "type": "PLA",
+    "brand": "Elegoo",
+    "cost_per_kg": 120.0,
 }
 
 
@@ -9,8 +9,9 @@ def test_create(client):
     response = client.post("/api/v1/filament-types/", json=FILAMENT_TYPE_PAYLOAD)
     assert response.status_code == 201
     data = response.json()
-    assert data["name"] == FILAMENT_TYPE_PAYLOAD["name"]
-    assert data["temp_min"] == FILAMENT_TYPE_PAYLOAD["temp_min"]
+    assert data["type"] == FILAMENT_TYPE_PAYLOAD["type"]
+    assert data["brand"] == FILAMENT_TYPE_PAYLOAD["brand"]
+    assert data["cost_per_kg"] == FILAMENT_TYPE_PAYLOAD["cost_per_kg"]
     assert "id" in data
 
     client.delete(f"/api/v1/filament-types/{data['id']}")
@@ -29,12 +30,12 @@ def test_list(client):
 def test_edit(client):
     created = client.post("/api/v1/filament-types/", json=FILAMENT_TYPE_PAYLOAD).json()
 
-    updated_payload = {**FILAMENT_TYPE_PAYLOAD, "name": "PETG", "temp_min": 220, "temp_max": 250}
+    updated_payload = {**FILAMENT_TYPE_PAYLOAD, "type": "PETG", "cost_per_kg": 150.0}
     response = client.put(f"/api/v1/filament-types/{created['id']}", json=updated_payload)
     assert response.status_code == 200
     data = response.json()
-    assert data["name"] == "PETG"
-    assert data["temp_max"] == 250
+    assert data["type"] == "PETG"
+    assert data["cost_per_kg"] == 150.0
 
     client.delete(f"/api/v1/filament-types/{created['id']}")
 

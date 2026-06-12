@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}{{ "Edit spool model" if spool_model else "New spool model" }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>{{ "Edit spool model" if spool_model else "New spool model" }}</h1>
+</div>
+
+<form method="post" class="form">
+    <div class="form-group">
+        <label for="name">Name</label>
+        <input type="text" id="name" name="name" placeholder="e.g. Elegoo 1kg reel" value="{{ spool_model.name if spool_model else '' }}" required>
+    </div>
+
+    <div class="form-group">
+        <label for="weight_g">Empty spool weight (g)</label>
+        <input type="number" id="weight_g" name="weight_g" step="0.01" min="0" value="{{ spool_model.weight_g if spool_model else '' }}" required>
+    </div>
+
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Save</button>
+        <a href="{{ url_for('list_filaments') }}" class="btn btn-secondary">Cancel</a>
+    </div>
+</form>
+{% endblock %}

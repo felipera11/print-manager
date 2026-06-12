@@ -8,20 +8,25 @@ CREATE TABLE printers (
 
 CREATE TABLE filament_types (
     id SERIAL PRIMARY KEY,
+    type VARCHAR(50) NOT NULL,
+    brand VARCHAR(100) NOT NULL,
+    cost_per_kg NUMERIC(10, 2) NOT NULL
+);
+
+CREATE TABLE spool_models (
+    id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
-    temp_min INTEGER NOT NULL,
-    temp_max INTEGER NOT NULL
+    weight_g NUMERIC(10, 2) NOT NULL
 );
 
 CREATE TABLE spools (
     id SERIAL PRIMARY KEY,
     number INTEGER NOT NULL,
     type_id INTEGER NOT NULL REFERENCES filament_types(id),
-    brand VARCHAR(100) NOT NULL,
     color VARCHAR(50) NOT NULL,
+    spool_model_id INTEGER NOT NULL REFERENCES spool_models(id),
     total_weight_g NUMERIC(10, 2) NOT NULL,
-    remaining_weight_g NUMERIC(10, 2) NOT NULL,
-    cost_per_kg NUMERIC(10, 2) NOT NULL
+    remaining_weight_g NUMERIC(10, 2) NOT NULL
 );
 
 CREATE TABLE clients (

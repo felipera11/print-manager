@@ -8,13 +8,14 @@
     <div class="btn-group">
         <a href="{{ url_for('new_filament_type') }}" class="btn btn-primary">New filament type</a>
         <a href="{{ url_for('new_spool') }}" class="btn btn-secondary">New spool</a>
+        <a href="{{ url_for('new_spool_model') }}" class="btn btn-secondary">New spool model</a>
     </div>
 </div>
 
 {% for filament_type in filament_types %}
 <section class="card">
     <div class="card-header">
-        <h2>{{ filament_type.name }} ({{ filament_type.temp_min }}-{{ filament_type.temp_max }}°C)</h2>
+        <h2>{{ filament_type.type }} - {{ filament_type.brand }} (${{ filament_type.cost_per_kg }}/kg)</h2>
         <div class="btn-group">
             <a href="{{ url_for('edit_filament_type', type_id=filament_type.id) }}" class="btn btn-secondary btn-sm">Edit</a>
             <form action="{{ url_for('delete_filament_type', type_id=filament_type.id) }}" method="post">
@@ -28,11 +29,10 @@
             <thead>
                 <tr>
                     <th>Number</th>
-                    <th>Brand</th>
                     <th>Color</th>
+                    <th>Spool model</th>
                     <th>Total weight (g)</th>
                     <th>Remaining weight (g)</th>
-                    <th>Cost per kg</th>
                     <th class="actions"></th>
                 </tr>
             </thead>
@@ -40,11 +40,10 @@
                 {% for spool in filament_type.spools %}
                 <tr>
                     <td>{{ spool.number }}</td>
-                    <td>{{ spool.brand }}</td>
                     <td>{{ spool.color }}</td>
+                    <td>{{ spool.spool_model.name if spool.spool_model else "-" }}</td>
                     <td>{{ spool.total_weight_g }}</td>
                     <td>{{ spool.remaining_weight_g }}</td>
-                    <td>{{ spool.cost_per_kg }}</td>
                     <td class="actions">
                         <div class="btn-group">
                             <a href="{{ url_for('edit_spool', spool_id=spool.id) }}" class="btn btn-secondary btn-sm">Edit</a>
@@ -65,6 +64,43 @@
 {% endfor %}
 
 <section class="card">
+    <div class="card-header">
+        <h2>Spool models</h2>
+    </div>
+
+    <div class="table-wrapper">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Weight (g)</th>
+                    <th class="actions"></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for spool_model in spool_models %}
+                <tr>
+                    <td>{{ spool_model.name }}</td>
+                    <td>{{ spool_model.weight_g }}</td>
+                    <td class="actions">
+                        <div class="btn-group">
+                            <a href="{{ url_for('edit_spool_model', spool_model_id=spool_model.id) }}" class="btn btn-secondary btn-sm">Edit</a>
+                            <form action="{{ url_for('delete_spool_model', spool_model_id=spool_model.id) }}" method="post">
+                                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Delete this spool model?')">Delete</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if not spool_models %}
+    <p class="empty-state">No spool models registered yet.</p>
+    {% endif %}
+</section>
+
+<section class="card">
     <h2>Suggest a spool</h2>
     <form method="get" class="form">
         <div class="form-group">
@@ -77,7 +113,7 @@
             <select id="type_id" name="type_id" required>
                 <option value="">Select a type</option>
                 {% for filament_type in filament_types %}
-                <option value="{{ filament_type.id }}" {% if type_id|string == filament_type.id|string %}selected{% endif %}>{{ filament_type.name }}</option>
+                <option value="{{ filament_type.id }}" {% if type_id|string == filament_type.id|string %}selected{% endif %}>{{ filament_type.type }} - {{ filament_type.brand }}</option>
                 {% endfor %}
             </select>
         </div>

@@ -1,11 +1,12 @@
 from fastapi import FastAPI
 
-from routers import filament_types, printers, spools
+from routers import filament_types, printers, spool_models, spools
 
 app = FastAPI(title="Print Manager 3D API")
 
 app.include_router(printers.router, prefix="/api/v1/printers", tags=["printers"])
 app.include_router(filament_types.router, prefix="/api/v1/filament-types", tags=["filament-types"])
+app.include_router(spool_models.router, prefix="/api/v1/spool-models", tags=["spool-models"])
 app.include_router(spools.router, prefix="/api/v1/spools", tags=["spools"])
 
 
